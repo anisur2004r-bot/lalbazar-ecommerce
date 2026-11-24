@@ -1,0 +1,273 @@
+// LalBazar E-commerce Prisma Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String   @unique
+  passwordHash String
+  role         String   @default("CUSTOMER") // CUSTOMER | ADMIN
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  reviews   Review[]
+  wishlist  Wishlist[]
+  cart      Cart?
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  nameBn      String?
+  slug        String   @unique
+  icon        String?
+  image       String?
+  parentId    String?
+  parent      Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  order       Int      @default(0)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+  banners  Banner[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  nameBn        String?
+  slug          String   @unique
+  description   String
+  shortDesc     String?
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  brand         String?
+  sku           String?
+  regularPrice  Float
+  salePrice     Float?
+  unit          String?  // kg, pcs, litre, etc.
+  stock         Int      @default(0)
+  lowStockAlert Int      @default(5)
+  weight        Float?   // in kg, for shipping
+  images        String   // JSON array of image URLs
+  tags          String?  // comma separated
+  rating        Float    @default(0)
+  reviewCount   Int      @default(0)
+  soldCount     Int      @default(0)
+  isFeatured    Boolean  @default(false)
+  isBestSeller  Boolean  @default(false)
+  isNewArrival  Boolean  @default(false)
+  isSpecialOffer Boolean @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reviews    Review[]
+  orderItems OrderItem[]
+  wishlist   Wishlist[]
+  cartItems  CartItem[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  phone     String
+  district  String
+  area      String
+  addressLine String
+  landmark  String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  couponCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  unit      String?
+  createdAt DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  // Guest info
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  // Shipping
+  addressId       String?
+  shippingName    String
+  shippingPhone   String
+  shippingAddress String
+  shippingDistrict String
+  shippingArea    String
+  shippingLandmark String?
+  // Money
+  subtotal        Float
+  discount        Float    @default(0)
+  deliveryCharge  Float    @default(0)
+  total           Float
+  // Payment
+  paymentMethod   String   // COD, BKASH, NAGAD, SSLCOMMERZ
+  paymentStatus   String   @default("UNPAID") // UNPAID, PAID, REFUNDED
+  paymentTxnId    String?
+  // Coupon
+  couponCode      String?
+  // Status
+  status          String   @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
+  cancelReason    String?
+  // Notes
+  notes           String?
+  // Tracking
+  trackingNumber  String?
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  confirmedAt     DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+  name        String
+  image       String
+  price       Float
+  quantity    Int
+  unit        String?
+  subtotal    Float
+}
+
+model Coupon {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  type         String   // PERCENTAGE, FIXED
+  value        Float
+  minOrder     Float    @default(0)
+  maxDiscount  Float?
+  usageLimit   Int?
+  usedCount    Int      @default(0)
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  image     String
+  link      String?
+  buttonText String?
+  position  String   // HERO, MIDDLE, SIDEBAR, FOOTER
+  categoryId String?
+  category  Category? @relation(fields: [categoryId], references: [id])
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settings {
+  id             String   @id @default(cuid())
+  siteName       String   @default("LalBazar")
+  tagline        String?
+  logo           String?
+  favicon        String?
+  primaryColor   String   @default("#E11D48")
+  phone          String?
+  email          String?
+  address        String?
+  facebook       String?
+  instagram      String?
+  youtube        String?
+  whatsapp       String?
+  defaultDeliveryCharge Float @default(60)
+  freeDeliveryThreshold Float @default(2000)
+  insideDhakaCharge Float @default(60)
+  outsideDhakaCharge Float @default(120)
+  bkashNumber    String?
+  nagadNumber    String?
+  sslcommerzStoreId String?
+  sslcommerzMode String  @default("sandbox")
+  metaTitle      String?
+  metaDescription String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+}
