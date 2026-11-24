@@ -5,13 +5,17 @@ export async function GET() {
   try {
     const settings = await db.settings.findUnique({ where: { id: "settings" } });
     return NextResponse.json({ settings });
-  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    if (body?.session?.role !== "ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    if (body?.session?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
     const { session, ...data } = body;
     const settings = await db.settings.upsert({
       where: { id: "settings" },
@@ -36,5 +40,7 @@ export async function PUT(req: NextRequest) {
       create: { id: "settings", siteName: data.siteName || "LalBazar" },
     });
     return NextResponse.json({ settings });
-  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

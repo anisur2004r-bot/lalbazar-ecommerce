@@ -12,7 +12,7 @@ export interface SessionUser {
 }
 
 const SESSION_COOKIE = "lalbazar_session";
-const SESSION_DURATION = 60 * 60 * 24 * 7; // 7 days
+const SESSION_DURATION = 60 * 60 * 24 * 7;
 
 const SECRET = process.env.SESSION_SECRET || "lalbazar-dev-secret-key-change-in-production-2026";
 
