@@ -70,9 +70,14 @@ export async function GET(req: NextRequest) {
       db.product.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit, include: { category: true } }),
     ]);
 
-    const result = products.map((p) => ({ ...p, images: parseImages(p.images), categoryName: p.category?.name, categorySlug: p.category?.slug, category: undefined }));
+    const result = products.map((p) => ({
+      ...p, images: parseImages(p.images),
+      categoryName: p.category?.name, categorySlug: p.category?.slug, category: undefined,
+    }));
+
     return NextResponse.json({ products: result, total, page, limit, totalPages: Math.ceil(total / limit) });
   } catch (e: any) {
+    console.error("GET /api/products error:", e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
@@ -91,12 +96,14 @@ export async function POST(req: NextRequest) {
         regularPrice: Number(data.regularPrice), salePrice: data.salePrice ? Number(data.salePrice) : null,
         stock: Number(data.stock || 0), weight: data.weight ? Number(data.weight) : null,
         images: JSON.stringify(data.images || []), tags: data.tags || null,
-        isFeatured: !!data.isFeatured, isBestSeller: !!data.isBestSeller, isNewArrival: !!data.isNewArrival,
-        isSpecialOffer: !!data.isSpecialOffer, isActive: data.isActive !== false,
+        isFeatured: !!data.isFeatured, isBestSeller: !!data.isBestSeller,
+        isNewArrival: !!data.isNewArrival, isSpecialOffer: !!data.isSpecialOffer,
+        isActive: data.isActive !== false,
       },
     });
     return NextResponse.json({ product: created });
   } catch (e: any) {
+    console.error("POST /api/products error:", e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
