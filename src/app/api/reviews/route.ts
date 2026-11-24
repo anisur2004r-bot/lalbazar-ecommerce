@@ -7,13 +7,21 @@ export async function POST(req: NextRequest) {
     const user = await getSession(req);
     if (!user) return NextResponse.json({ error: "Login required" }, { status: 401 });
     const { productId, rating, comment } = await req.json();
-    if (!productId || !rating || rating < 1 || rating > 5) return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
+    if (!productId || !rating || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
+    }
     const existing = await db.review.findFirst({ where: { userId: user.id, productId } });
-    if (existing) await db.review.update({ where: { id: existing.id }, data: { rating, comment } });
-    else await db.review.create({ data: { userId: user.id, productId, rating, comment } });
+    if (existing) {
+      await db.review.update({ where: { id: existing.id }, data: { rating, comment } });
+    } else {
+      await db.review.create({ data: { userId: user.id, productId, rating, comment } });
+    }
+    // Recompute product rating
     const reviews = await db.review.findMany({ where: { productId } });
     const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
     await db.product.update({ where: { id: productId }, data: { rating: Math.round(avg * 10) / 10, reviewCount: reviews.length } });
     return NextResponse.json({ success: true });
-  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }

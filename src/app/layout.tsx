@@ -24,7 +24,9 @@ export const metadata: Metadata = {
   description: "LalBazar is Bangladesh's trusted online marketplace. Shop groceries, electronics, fashion, home appliances, beauty and more. Cash on Delivery, bKash, Nagad accepted. Fast delivery in Dhaka and nationwide.",
   keywords: ["LalBazar", "Bangladesh online shopping", "online grocery Bangladesh", "ecommerce Bangladesh", "bKash shopping", "Nagad shopping", "cash on delivery", "Dhaka delivery"],
   authors: [{ name: "LalBazar Team" }],
-  icons: { icon: "/favicon.svg" },
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "LalBazar – Online Shopping in Bangladesh",
     description: "Shop groceries, electronics, fashion & more. COD, bKash, Nagad accepted. Fast delivery nationwide.",
@@ -35,7 +37,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body

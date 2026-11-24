@@ -10,9 +10,15 @@ export async function POST(req: NextRequest) {
     if (new Date() < coupon.startDate || new Date() > coupon.endDate) return NextResponse.json({ valid: false, error: "Coupon expired" });
     if (subtotal < coupon.minOrder) return NextResponse.json({ valid: false, error: `Minimum order ৳${coupon.minOrder} required` });
     if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) return NextResponse.json({ valid: false, error: "Coupon usage limit reached" });
+
     let discount = 0;
-    if (coupon.type === "PERCENTAGE") discount = Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount ?? Infinity);
-    else discount = coupon.value;
+    if (coupon.type === "PERCENTAGE") {
+      discount = Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount ?? Infinity);
+    } else {
+      discount = coupon.value;
+    }
     return NextResponse.json({ valid: true, discount, coupon: { code: coupon.code, type: coupon.type, value: coupon.value } });
-  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
